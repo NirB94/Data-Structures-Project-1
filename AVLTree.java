@@ -8,6 +8,19 @@
  */
 
 public class AVLTree {
+	IAVLNode root;
+	IAVLNode min;
+	IAVLNode max;
+	int size;
+	IAVLNode EXT = new AVLNode(-1, null);
+
+	public AVLTree {
+		this.root = null;
+		this.min = null;
+		this.max = null;
+		this.size = 0;
+		this.EXT.setHeight(-1);
+	}
 
   /**
    * public boolean empty()
@@ -16,7 +29,7 @@ public class AVLTree {
    *
    */
   public boolean empty() {
-    return false; // to be replaced by student code
+    return this.root == null; // Returns True if the Tree is empty from nodes. O(1).
   }
 
  /**
@@ -25,9 +38,25 @@ public class AVLTree {
    * Returns the info of an item with key k if it exists in the tree.
    * otherwise, returns null.
    */
-  public String search(int k)
-  {
-	return "searchDefaultString";  // to be replaced by student code
+  public String search(int k) { // Calls for recursive function. O(1) (Inside function is O(logn)).
+	return searchRec(k, this.root);
+  }
+
+  private String searchRec(int k, IAVLNode node) { // Returns the value of a node with key k, or null if key k is not in tree. O(logn).
+	  if (node == EXT) {
+		  return null;
+	  }
+	  else if (k == node.getKey()) {
+		  return node.getValue();
+	  }
+	  else {
+		  if (k < node.getKey()) {
+			  return searchRec(k, node.getLeft());
+		  }
+		  else if (k > node.getKey()) {
+			  return searchRec(k, node.getRight());
+		  }
+	  }
   }
 
   /**
@@ -65,7 +94,7 @@ public class AVLTree {
     */
    public String min()
    {
-	   return "minDefaultString"; // to be replaced by student code
+	   return !empty() ? this.min.getValue() : null; // Returns min key node's info or null if tree is empty. O(1)
    }
 
    /**
@@ -76,7 +105,7 @@ public class AVLTree {
     */
    public String max()
    {
-	   return "maxDefaultString"; // to be replaced by student code
+	   return !empty() ? this.max.getValue() : null; // Returns max key node's info or null if tree is empty. O(1)
    }
 
   /**
@@ -109,7 +138,7 @@ public class AVLTree {
     */
    public int size()
    {
-	   return 422; // to be replaced by student code
+	   return this.size; // Returns num of nodes in tree. O(1)
    }
    
    /**
@@ -119,7 +148,7 @@ public class AVLTree {
     */
    public IAVLNode getRoot()
    {
-	   return null;
+	   return this.root; // Returns the root of the tree. O(1)
    }
    
    /**
@@ -166,6 +195,8 @@ public class AVLTree {
 		public boolean isRealNode(); // Returns True if this is a non-virtual AVL node.
     	public void setHeight(int height); // Sets the height of the node.
     	public int getHeight(); // Returns the height of the node (-1 for virtual nodes).
+		public int updateRankDifference(int[] rankDifference);
+		public int updateBallanceFactor(int bF);
 	}
 
    /** 
@@ -176,52 +207,94 @@ public class AVLTree {
     * 
     * This class can and MUST be modified (It must implement IAVLNode).
     */
-  public class AVLNode implements IAVLNode{
-		public int getKey()
-		{
-			return 423; // to be replaced by student code
+  public class AVLNode implements IAVLNode {
+	  private int key;
+	  private String info;
+	  private int rank;
+	  private AVLNode left;
+	  private AVLNode right;
+	  private AVLNode parent; // Gender fluid
+	  private int[] rankDifference;
+	  private int bF;
+
+
+	   public AVLNode(int key, String info) {
+		   this.key = key;
+		   this.info = info;
+		   this.rank;
+		   this.left;
+		   this.right;
+		   this.parent;
+		   this.rankDifference = new int[2];
+		   this.bF;
+	   }
+
+
+		public int getKey() { // Returns node's key or -1 if node is an external leaf. O(1)
+			return isRealNode() ? AVLNode.key : -1;
 		}
-		public String getValue()
-		{
-			return "getValueDefault"; // to be replaced by student code
+
+
+		public String getValue() { // Returns node's info or null if node is an external leaf. O(1)
+			return isRealNode() ? AVLNode.info : null;
 		}
-		public void setLeft(IAVLNode node)
-		{
-			return; // to be replaced by student code
+
+
+		public void setLeft(IAVLNode node) { // Sets the left sub-tree of the given node. Every node in left should be smaller the the node. O(1)
+		   AVLNode.left = node;
 		}
-		public IAVLNode getLeft()
-		{
-			return null; // to be replaced by student code
+
+
+		public IAVLNode getLeft() { // Returns the left sub-tree of the given node or null if node is an external leaf. O(1)
+			return isRealNode() ? AVLNode.left : null;
 		}
-		public void setRight(IAVLNode node)
-		{
-			return; // to be replaced by student code
+
+
+		public void setRight(IAVLNode node) { // Sets the right sub-tree of the given node. Every node in right should be greater then the node. O(1)
+		   AVLNode.right = right;
 		}
-		public IAVLNode getRight()
-		{
-			return null; // to be replaced by student code
+
+
+		public IAVLNode getRight() { // Returns the left sub-tree of the gien node or null if node is an external leaf. O(1)
+			return isRealNode() ? AVLNode.right : null;
 		}
-		public void setParent(IAVLNode node)
-		{
-			return; // to be replaced by student code
+
+
+		public void setParent(IAVLNode node) { // Sets the parent node of the given node. O(1)
+		   AVLNode.parent = node;
 		}
-		public IAVLNode getParent()
-		{
-			return null; // to be replaced by student code
+
+
+		public IAVLNode getParent() { // Returns the parent node of the given node. O(1)
+			return AVLNode.parent;
 		}
-		public boolean isRealNode()
-		{
-			return true; // to be replaced by student code
+
+
+		public boolean isRealNode() { // Checks if the node is an internal node or an external one. O(1)
+			return getHeight() != -1;
 		}
-	    public void setHeight(int height)
-	    {
-	      return; // to be replaced by student code
+
+
+	    public void setHeight(int height) { // Sets the height (i.e rank) of the given node. O(1)
+		  AVLNode.rank = height;
 	    }
-	    public int getHeight()
-	    {
-	      return 424; // to be replaced by student code
+
+
+	    public int getHeight() { // Returns the height (i.e rank) of the given node or null if node is an external leaf. O(1)
+	      return isRealNode() ? AVLNode.rank : -1;
 	    }
+
+
+		public int[] updateRankDifference(int[] rankDifference) { // Calculates rank differences between the node and it's sub-trees.
+			rankDifference[0] = this.rank - this.left.rank;
+			rankDifference[1] = this.rank - this.right.rank;
+		}
+
+		public int updateBallanceFactor(int bF) {
+		   bF = this.left.rank - this.right.rank;
+		   return bF;
+		}
+
   }
 
 }
-  
