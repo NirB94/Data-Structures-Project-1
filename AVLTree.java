@@ -100,9 +100,9 @@ public class AVLTree {
    public int insert(int k, String i) { // Searching the location to insert the node and rebalancing the tree, including updating all fields of nodes in the path from root to the inserted node.
 	   IAVLNode newNode = new AVLNode(k, i);
 	   IAVLNode newParent = generalSearch(k);
-	   if (newParent == null) { // Means tree is empty, and we need to initialize root // CHECK IF EQUALS WORK RIGHT!!!! should be don't yell at me ._."
+	   if (newParent == null) { // Means tree is empty, and we need to initialize root
 		   this.root = newNode;
-		   root.setLeft(EXT); rotateRight(EXT);
+		   root.setLeft(EXT); root.setRight(EXT);
 		   updateFields(root);
 		   return 0;
 	   }
@@ -129,7 +129,7 @@ public class AVLTree {
 	   promote(parent);
    }
 
-   private boolean isLegalRD(int[] rD) {
+   private boolean isLegalRD(int[] rD) { // Checks if a given rank Difference is legal according to AVL definition. O(1)
 	   int[][] legalRD = {{1,1}, {1,2}, {2,1}};
 	   for(int[] possibleRD : legalRD) {
 		   if (possibleRD == rD) {
@@ -148,7 +148,7 @@ public class AVLTree {
 	   node.updateRankDifference(updateRankDifferenceInTree(node));
    }
 
-   private int updateSizeInTree(IAVLNode node) {
+   private int updateSizeInTree(IAVLNode node) { // O(1)
 	   int inputSize = 0;
 	   if (node.getKey() != -1) {
 		   inputSize = node.getLeft().getSize() + node.getRight().getSize() + 1;
@@ -156,7 +156,7 @@ public class AVLTree {
 	   return inputSize;
    }
 
-   private int[] updateRankDifferenceInTree(IAVLNode node) {
+   private int[] updateRankDifferenceInTree(IAVLNode node) { // O(1)
 	   int[] rankDifference = new int[2];
 	   if (node.getKey() != -1) { // Means node is not EXT
 		   rankDifference[0] = node.getHeight() - node.getLeft().getHeight();
@@ -209,7 +209,7 @@ public class AVLTree {
 	   return numOfOperations;
    }
 
-   private void rotateRight(IAVLNode parent) { // Mind that we rotate parent with its left child
+   private void rotateRight(IAVLNode parent) { // Mind that we rotate parent with its left child O(1)
 	   IAVLNode node = parent.getLeft();
 	   IAVLNode grandpa = parent.getParent();
 	   IAVLNode rightChild = node.getRight();
@@ -230,7 +230,7 @@ public class AVLTree {
 	   parent.setParent(node);
    }
 
-   private void rotateLeft(IAVLNode parent) { // Mind that we rotate parent with its right child.
+   private void rotateLeft(IAVLNode parent) { // Mind that we rotate parent with its right child. O(1)
 	   IAVLNode node = parent.getRight();
 	   IAVLNode grandma = parent.getParent();
 	   IAVLNode leftChild = node.getLeft();
@@ -251,11 +251,11 @@ public class AVLTree {
 	   parent.setParent(node);
    }
 
-   private void promote(IAVLNode node) {
+   private void promote(IAVLNode node) { // O(1)
 	   node.setHeight(node.getHeight() + 1);
    }
 
-   private void demote(IAVLNode node) {
+   private void demote(IAVLNode node) { // O(1)
 	   node.setHeight(node.getHeight() - 1);
    }
 
