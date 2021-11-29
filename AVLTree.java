@@ -14,7 +14,6 @@ public class AVLTree {
 	IAVLNode min;
 	IAVLNode max;
 	int size;
-	int rank;
 	IAVLNode EXT = new AVLNode(-1, null);
 
 	public AVLTree() {
@@ -22,7 +21,6 @@ public class AVLTree {
 		this.min = null;
 		this.max = null;
 		this.size = 0;
-		this.rank = 0;
 		this.EXT.setHeight(-1);
 		this.EXT.updateSize(0);
 	}
@@ -115,17 +113,17 @@ public class AVLTree {
 	  return numOfMoves;
    }
 
-   public void insertNode(IAVLNode parent, IAVLNode child) {
-	   if (parent.getKey() > child.getKey()) { // Means child is a LEFT child
-		   parent.setLeft(child);
+   public void insertNode(IAVLNode parent, IAVLNode node) {
+	   if (parent.getKey() > node.getKey()) { // Means child is a LEFT child
+		   parent.setLeft(node);
 	   }
 	   else { // Means child is a RIGHT child. CANNOT be equal.
-		   parent.setRight(child);
+		   parent.setRight(node);
 	   }
-	   child.setParent(parent);
-	   child.setLeft(EXT);
-	   child.setRight(EXT);
-	   updateFields(child);
+	   node.setParent(parent);
+	   node.setLeft(EXT);
+	   node.setRight(EXT);
+	   updateFields(node);
 	   promote(parent);
    }
 
@@ -165,11 +163,12 @@ public class AVLTree {
 	   return rankDifference;
    }
 
-   private int rebalanceInsert(IAVLNode node) {
+   private int rebalanceInsert(IAVLNode node) { // Rebalance from this node and go up. O(logn)
 	   int numOfOperations = 0;
 	   int[][] rDParent4Promote = {{0,1}, {1,0}};
 	   int[][] rDParent4Rotate = {{0,2}, {2,0}};
 	   int[][] rdNode4Rotate = {{1,2}, {2,1}};
+	   int[] specialJoinRDCase = {1,1};
 	   IAVLNode parent = node.getParent(); // Doing most operations in relation to parent, stating the child as input because it's more convenient that determining every time whether it's left child or right child.
 	   while (parent != null) {
 		   int[] parentRD = parent.getRankDifference();
@@ -200,6 +199,16 @@ public class AVLTree {
 				   rotateLeft(parent);
 				   demote(parent);
 				   numOfOperations += 5;
+			   }
+			   else if (nodeRD == specialJoinRDCase) { // Special case relevant only for joining trees
+				   if (parentRD == rDParent4Rotate[0]) { // node is (1,1) left child to a (0,2) parent
+					   rotateRight(parent);
+					   promote(node);
+				   }
+				   else if (parentRD == rDParent4Rotate[1]) { // node is (1,1) right child to a (2,0) parent
+					   rotateLeft(parent);
+					   promote(node);
+				   }
 			   }
 		   }
 		   updateFields(parent);
@@ -338,11 +347,6 @@ public class AVLTree {
 	   return this.root; // Returns the root of the tree. O(1)
    }
 
-   private int getRank()
-   {
-	   return this.root.getHeight();
-   }
-   
    /**
     * public AVLTree[] split(int x)
     *
@@ -366,9 +370,90 @@ public class AVLTree {
 	* precondition: keys(t) < x < keys() or keys(t) > x > keys(). t/tree might be empty (rank = -1).
     * postcondition: none
     */   
-   public int join(IAVLNode x, AVLTree t)
+   public int join(IAVLNode x, AVLTree t) // Joins a given AVL tree t and a node x to this tree. O(log)
    {
-	   return -1;
+	   if (t.empty()) { // t is empty tree, just insert x to this.
+		   if (this.empty()) { // Both trees are empty
+			   this.root = x;
+		   }
+		   else { // this is not empty
+			   IAVLNode newParent = this.generalSearch(x.getKey());
+			   this.insertNode(newParent, x);
+		   }
+		   return this.root.getHeight() + 2;
+	   }
+	   else if (this.empty()) { // this is empty tree, just insert x to t.
+		   if (t.empty()) { // Both trees are empty
+			   this.root = x;
+		   }
+		   else { // t is not empty
+			   IAVLNode newParent = t.generalSearch(x.getKey());
+			   t.insertNode(newParent, x);
+		   }
+		   return t.root.getHeight() + 2;
+	   }
+	   if (t.root.getHeight() > this.root.getHeight()) {
+		   if (t.min.getKey() > this.max.getKey()) {
+			   return joinRight(t, this, x);
+		   }
+		   else {
+			   return joinLeft(t, this, x);
+		   }
+	   }
+	   else {
+		   if (t.root.getKey() > this.root.getKey()) {
+			   return joinLeft(this,t,x);
+		   }
+		   else {
+			   return joinRight(this, t, x);
+		   }
+	   }
+   }
+
+   private int joinRight(AVLTree big, AVLTree small, IAVLNode x) { //
+	   IAVLNode joinPoint = big.root;
+	   int bigRank = big.root.getHeight();
+	   int smallRank = small.root.getHeight();
+	   while (joinPoint.getHeight() > smallRank) {
+		   if (joinPoint.getLeft().isRealNode()) {
+			   joinPoint = joinPoint.getLeft();
+		   }
+		   else {
+			   joinPoint = joinPoint.getRight();
+		   }
+	   }
+	   x.setLeft(small.root);
+	   x.setRight(joinPoint);
+	   x.setParent(joinPoint.getParent());
+	   small.root.setParent(x);
+	   joinPoint.getParent().setLeft(x);
+	   joinPoint.setParent(x);
+	   updateFields(x);
+	   rebalanceInsert(x);
+	   return (bigRank - smallRank + 1);
+   }
+
+   private int joinLeft(AVLTree big, AVLTree small, IAVLNode x) {
+	   IAVLNode joinPoint = big.root;
+	   int bigRank = big.root.getHeight();
+	   int smallRank = small.root.getHeight();
+	   while (joinPoint.getHeight() > smallRank) {
+		   if (joinPoint.getRight().isRealNode()) {
+			   joinPoint = joinPoint.getRight();
+		   }
+		   else {
+			   joinPoint = joinPoint.getLeft();
+		   }
+	   }
+	   x.setRight(small.root);
+	   x.setLeft(joinPoint);
+	   x.setParent(joinPoint.getParent());
+	   small.root.setParent(x);
+	   joinPoint.getParent().setRight(x);
+	   joinPoint.setParent(x);
+	   updateFields(x);
+	   rebalanceInsert(x);
+	   return (bigRank - smallRank + 1);
    }
 
 	/** 
@@ -389,7 +474,7 @@ public class AVLTree {
     	public int getHeight(); // Returns the height of the node (-1 for virtual nodes).
 		public void updateRankDifference(int[] insertedRankDifference);
 		public int[] getRankDifference();
-		public int updateBalanceFactor();
+		public void updateBalanceFactor();
 		public int getBalanceFactor();
 		public void updateSize(int inputSize);
 		public int getSize();
@@ -477,7 +562,7 @@ public class AVLTree {
 
 
 		public boolean isRealNode() { // Checks if the node is an internal node or an external one. O(1)
-			return getHeight() != -1;
+			return this.getHeight() != -1;
 		}
 
 
@@ -487,7 +572,7 @@ public class AVLTree {
 
 
 	    public int getHeight() { // Returns the height (i.e rank) of the given node or null if node is an external leaf. O(1)
-	      return isRealNode() ? rank : -1;
+	      return this.isRealNode() ? rank : -1;
 	    }
 
 
@@ -499,9 +584,8 @@ public class AVLTree {
 		   return rankDifference;
 		}
 
-		public int updateBalanceFactor() {
+		public void updateBalanceFactor() {
 		   bF = this.key != -1 ? (this.left.getHeight() - this.right.getHeight()) : -1;
-		   return bF;
 		}
 
 		public int getBalanceFactor() {
