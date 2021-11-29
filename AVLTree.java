@@ -14,6 +14,7 @@ public class AVLTree {
 	IAVLNode min;
 	IAVLNode max;
 	int size;
+	int rank;
 	IAVLNode EXT = new AVLNode(-1, null);
 
 	public AVLTree() {
@@ -21,6 +22,7 @@ public class AVLTree {
 		this.min = null;
 		this.max = null;
 		this.size = 0;
+		this.rank = 0;
 		this.EXT.setHeight(-1);
 		this.EXT.updateSize(0);
 	}
@@ -42,29 +44,51 @@ public class AVLTree {
    * otherwise, returns null.
    */
   public String search(int k) { // Calls for recursive function. O(1) (Inside function is O(logn)).
-	  IAVLNode resultNode = searchRec(k, this.root);
-	return (resultNode != null) ? resultNode.getValue() : null;
-  }
-
-  private IAVLNode searchRec(int k, IAVLNode node) { // Returns the value of a node with key k, or null if key k is not in tree. O(logn).
-	  if (node == EXT) {
+	  IAVLNode resultNode = generalSearch(k);
+	  if (resultNode == null) {
 		  return null;
 	  }
-	  else if (k == node.getKey()) { // We made it!
-		  return node;
+	  if (resultNode.getKey() < k) {
+		  return resultNode.getRight().getValue();
+	  }
+	  else if (resultNode.getKey() == k) {
+		  return resultNode.getValue();
 	  }
 	  else {
-		  if (k < node.getKey()) {
-			  return searchRec(k, node.getLeft()); // Go left
-		  }
-		  else if (k > node.getKey()) {
-			  return searchRec(k, node.getRight()); // Go right
-		  }
+		  return resultNode.getLeft().getValue();
 	  }
-	  return null; // Should never get here
   }
 
-  /**
+	private IAVLNode generalSearch(int k){ // Returns parent of the desired node
+		IAVLNode currNode = this.root;
+		if (currNode == null) { // Means tree is empty
+			return null; // What we chose to return
+		}
+		while (currNode.getHeight() > 0) { // While we're not looking at a leaf
+			if (currNode.getKey() == k) { // There's already a node with key k
+				return currNode;
+			}
+			else if (k < currNode.getKey()) { // Go left (if possible)
+				if (currNode.getLeft().isRealNode()) {
+					currNode = currNode.getLeft();
+				}
+				else {
+					return currNode;
+				}
+			}
+			else { // Go right (if possible)
+				if (currNode.getRight().isRealNode()) {
+					currNode = currNode.getRight();
+				}
+				else {
+					return currNode;
+				}
+			}
+		}
+		return currNode;
+	}
+
+	/**
    * public int insert(int k, String i)
    *
    * Inserts an item with key k and info i to the AVL tree.
@@ -75,49 +99,20 @@ public class AVLTree {
    */
    public int insert(int k, String i) { // Searching the location to insert the node and rebalancing the tree, including updating all fields of nodes in the path from root to the inserted node.
 	   IAVLNode newNode = new AVLNode(k, i);
-	   IAVLNode newParent = searchToInsert(newNode);
-	   if (newParent == EXT) { // There's already a node with key k in the tree
-		   return -1;
-	   }
-	   if (newParent.equals(newNode)) { // Means tree is empty, and we need to initialize root // CHECK IF EQUALS WORK RIGHT!!!! should be don't yell at me ._."
+	   IAVLNode newParent = generalSearch(k);
+	   if (newParent == null) { // Means tree is empty, and we need to initialize root // CHECK IF EQUALS WORK RIGHT!!!! should be don't yell at me ._."
 		   this.root = newNode;
 		   root.setLeft(EXT); rotateRight(EXT);
 		   updateFields(root);
 		   return 0;
 	   }
+	   if (newParent.getKey() == k) { // There's already a node with key k in the tree
+		   return -1;
+	   }
 	   insertNode(newParent, newNode);
 	   int numOfMoves = 1; // Promoting inside insertNode therefore there's already one balancing operation
 	   numOfMoves += rebalanceInsert(newParent); // We already took care of newParent-newNode edge. now for the rest of the tree
 	  return numOfMoves;
-   }
-
-   private IAVLNode searchToInsert(IAVLNode node){
-	   IAVLNode currNode = this.root;
-	   if (currNode == null) { // Means tree is empty
-		   return node; // What we chose to return
-	   }
-	   while (currNode.getHeight() > 0) { // While we're not looking at a leaf
-		   if (currNode.getKey() == node.getKey()) { // There's already a node with key k
-			   return EXT;
-		   }
-		   else if (node.getKey() < currNode.getKey()) { // Go left (if possible)
-			   if (currNode.getLeft().isRealNode()) {
-				   currNode = currNode.getLeft();
-			   }
-			   else {
-				   return currNode;
-			   }
-		   }
-		   else { // Go right (if possible)
-			   if (currNode.getRight().isRealNode()) {
-				   currNode = currNode.getRight();
-			   }
-			   else {
-				   return currNode;
-			   }
-		   }
-	   }
-	   return currNode;
    }
 
    public void insertNode(IAVLNode parent, IAVLNode child) {
@@ -219,11 +214,15 @@ public class AVLTree {
 	   IAVLNode grandpa = parent.getParent();
 	   IAVLNode rightChild = node.getRight();
 	   node.setParent(grandpa);
-	   if (grandpa.getKey() < parent.getKey()) { // Means parent is pop's right child
-		   grandpa.setRight(node);
+	   if (grandpa == null) { // Means parent is the root!
+		   this.root = node;
 	   }
-	   else { // Parent is pop's left child (can't be equal)
-		   grandpa.setLeft(node);
+	   else { // Parent is not root
+		   if (grandpa.getKey() < parent.getKey()) { // Means parent is pop's right child
+			   grandpa.setRight(node);
+		   } else { // Parent is pop's left child (can't be equal)
+			   grandpa.setLeft(node);
+		   }
 	   }
 	   parent.setLeft(rightChild);
 	   rightChild.setParent(parent);
@@ -236,11 +235,15 @@ public class AVLTree {
 	   IAVLNode grandma = parent.getParent();
 	   IAVLNode leftChild = node.getLeft();
 	   node.setParent(grandma);
-	   if (grandma.getKey() < parent.getKey()) { // Means parent is mah's right child
-		   grandma.setRight(node);
+	   if (grandma == null) { // Parent is the root
+		   this.root = node;
 	   }
-	   else { // Parent is mah's right child (can't be equal)
-		   grandma.setLeft(node);
+	   else {
+		   if (grandma.getKey() < parent.getKey()) { // Means parent is mah's right child
+			   grandma.setRight(node);
+		   } else { // Parent is mah's right child (can't be equal)
+			   grandma.setLeft(node);
+		   }
 	   }
 	   parent.setRight(leftChild);
 	   leftChild.setParent(parent);
@@ -333,6 +336,11 @@ public class AVLTree {
    public IAVLNode getRoot()
    {
 	   return this.root; // Returns the root of the tree. O(1)
+   }
+
+   private int getRank()
+   {
+	   return this.root.getHeight();
    }
    
    /**
