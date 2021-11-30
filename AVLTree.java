@@ -25,6 +25,13 @@ public class AVLTree {
 		this.EXT.updateSize(0);
 	}
 
+    public AVLTree(IAVLNode newRoot) { // Another Constructor
+        this.root = newRoot;
+        this.min = newRoot.getMin();
+        this.max = newRoot.getMax();
+        this.size = newRoot.getSize();
+    }
+
   /**
    * public boolean empty()
    *
@@ -110,6 +117,7 @@ public class AVLTree {
 	   insertNode(newParent, newNode);
 	   int numOfMoves = 1; // Promoting inside insertNode therefore there's already one balancing operation
 	   numOfMoves += rebalanceInsert(newParent); // We already took care of newParent-newNode edge. now for the rest of the tree
+       updateTreeFields();
 	  return numOfMoves;
    }
 
@@ -124,13 +132,13 @@ public class AVLTree {
 	   node.setLeft(EXT);
 	   node.setRight(EXT);
 	   updateFields(node);
-	   promote(parent);
+       updateFields(parent);
    }
 
    private boolean isLegalRD(int[] rD) { // Checks if a given rank Difference is legal according to AVL definition. O(1)
 	   int[][] legalRD = {{1,1}, {1,2}, {2,1}};
 	   for(int[] possibleRD : legalRD) {
-		   if (possibleRD == rD) {
+		   if (Arrays.equals(possibleRD, rD)) {
 			   return true;
 		   }
 	   }
@@ -144,6 +152,12 @@ public class AVLTree {
 	   node.updateBalanceFactor();
 	   node.setHeight(Math.max(node.getLeft().getHeight(), node.getRight().getHeight()) + 1); // Updates rank
 	   node.updateRankDifference(updateRankDifferenceInTree(node));
+   }
+
+   private void updateTreeFields() {
+       this.min = root.getMin();
+       this.max = root.getMax();
+       this.size = root.getSize();
    }
 
    private int updateSizeInTree(IAVLNode node) { // O(1)
@@ -170,29 +184,29 @@ public class AVLTree {
 	   int[][] rdNode4Rotate = {{1,2}, {2,1}};
 	   int[] specialJoinRDCase = {1,1};
 	   IAVLNode parent = node.getParent(); // Doing most operations in relation to parent, stating the child as input because it's more convenient that determining every time whether it's left child or right child.
-	   while (parent != null) {
-		   int[] parentRD = parent.getRankDifference();
+       while (parent != null) {
+		   int[] parentRD = updateRankDifferenceInTree(parent);
 		   if (!isLegalRD(parentRD)) {
 			   int[] nodeRD = node.getRankDifference();
 			   if (Arrays.asList(rDParent4Promote).contains(parentRD)) { // Means parent's rD is either [0,1] or [1,0]
 				   promote(parent);
 				   numOfOperations++;
-			   } else if (parentRD == rDParent4Rotate[0] && nodeRD == rdNode4Rotate[0]) { // First rotate case
+			   } else if (Arrays.equals(parentRD, rDParent4Rotate[0]) && Arrays.equals(nodeRD, rdNode4Rotate[0])) { // First rotate case
 				   rotateRight(parent);
 				   demote(parent);
 				   numOfOperations += 2;
-			   } else if (parentRD == rDParent4Rotate[1] && nodeRD == rdNode4Rotate[1]) { // Its symmetrical counterpart
+			   } else if (Arrays.equals(parentRD, rDParent4Rotate[1]) && Arrays.equals(nodeRD, rdNode4Rotate[1])) { // Its symmetrical counterpart
 				   rotateLeft(parent);
 				   demote(parent);
 				   numOfOperations += 2;
-			   } else if (parentRD == rDParent4Rotate[0] && nodeRD == rdNode4Rotate[1]) { // Second rotate case.
+			   } else if (Arrays.equals(parentRD, rDParent4Rotate[0]) && Arrays.equals(nodeRD, rdNode4Rotate[1])) { // Second rotate case.
 				   promote(node.getRight());
 				   demote(node);
 				   rotateLeft(node);
 				   rotateRight(parent);
 				   demote(parent);
 				   numOfOperations += 5;
-			   } else if (parentRD == rDParent4Rotate[1] && nodeRD == rdNode4Rotate[0]) { // Its symmetrical counterpart
+			   } else if (Arrays.equals(parentRD, rDParent4Rotate[1]) && Arrays.equals(nodeRD, rdNode4Rotate[0])) { // Its symmetrical counterpart
 				   promote(node.getLeft());
 				   demote(node);
 				   rotateRight(node);
@@ -200,12 +214,12 @@ public class AVLTree {
 				   demote(parent);
 				   numOfOperations += 5;
 			   }
-			   else if (nodeRD == specialJoinRDCase) { // Special case relevant only for joining trees
-				   if (parentRD == rDParent4Rotate[0]) { // node is (1,1) left child to a (0,2) parent
+			   else if (Arrays.equals(nodeRD, specialJoinRDCase)) { // Special case relevant only for joining trees
+				   if (Arrays.equals(parentRD, rDParent4Rotate[0])) { // node is (1,1) left child to a (0,2) parent
 					   rotateRight(parent);
 					   promote(node);
 				   }
-				   else if (parentRD == rDParent4Rotate[1]) { // node is (1,1) right child to a (2,0) parent
+				   else if (Arrays.equals(parentRD, rDParent4Rotate[1])) { // node is (1,1) right child to a (2,0) parent
 					   rotateLeft(parent);
 					   promote(node);
 				   }
@@ -358,6 +372,7 @@ public class AVLTree {
     */   
    public AVLTree[] split(int x)
    {
+
 	   return null; 
    }
    
@@ -509,7 +524,7 @@ public class AVLTree {
 	   public AVLNode(int key, String info) {
 		   this.key = key;
 		   this.info = info;
-		   this.rank = 0;
+		   this.rank = -1;
 		   this.left = null;
 		   this.right = null;
 		   this.parent = null;
@@ -522,7 +537,7 @@ public class AVLTree {
 
 
 		public int getKey() { // Returns node's key or -1 if node is an external leaf. O(1)
-			return isRealNode() ? key : -1;
+			return Math.max(this.key, -1);
 		}
 
 
@@ -562,7 +577,7 @@ public class AVLTree {
 
 
 		public boolean isRealNode() { // Checks if the node is an internal node or an external one. O(1)
-			return this.getHeight() != -1;
+			return this.getKey() != -1;
 		}
 
 
