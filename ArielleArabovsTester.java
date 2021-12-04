@@ -1,5 +1,7 @@
 import com.sun.org.apache.xml.internal.serialize.LineSeparator;
 
+import java.util.Arrays;
+
 public class ArielleArabovsTester {
 
     public static void main(String[] args) {
@@ -58,6 +60,21 @@ public class ArielleArabovsTester {
         testertree.join(node.getRoot(), null);
         System.out.println("After second join:");
         PrintTree.print_tree(testertree);
+        System.out.println();
+        System.out.println("after deleting a not-existing node: ");
+        testertree.delete(16);
+        PrintTree.print_tree(testertree);
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        testertree.insert(100, "100");
+        System.out.println();
+        System.out.println();
+        PrintTree.print_tree(testertree);
+        System.out.println();
+        System.out.println();
+        testertree.delete(100);
+        PrintTree.print_tree(testertree);
         /*System.out.println(testertree.search(6));
         System.out.println();
         AVLTree[] splatted = testertree.split(31);
@@ -66,7 +83,7 @@ public class ArielleArabovsTester {
         System.out.println();
         PrintTree.print_tree(splatted[1]);*/
         //RandomTreeDanny.rand_ops(3);
-        System.out.println();
+        //System.out.println();
         /*System.out.println("successor:");
         testertree.binSuccessor(testertree.root.getRight());*/
         /*AVLTree.IAVLNode currNode = testertree.getRoot();
@@ -76,7 +93,7 @@ public class ArielleArabovsTester {
             PrintTree.print_tree(testertree);
             System.out.println();
         }*/
-        System.out.println("printing after deleting 15:");
+        /*System.out.println("printing after deleting 15:");
         testertree.delete(15);
         PrintTree.print_tree(testertree);
         System.out.println("Root: " + testertree.getRoot().getKey());
@@ -124,6 +141,11 @@ public class ArielleArabovsTester {
         System.out.println("after deleting 1:");
         testertree.delete(1);
         PrintTree.print_tree(testertree);
-        System.out.println("Root: " + testertree.getRoot().getKey());
+        System.out.println("Root: " + testertree.getRoot().getKey());*/
+        /*int[] keysTryout = testertree.keysToArray();
+        System.out.println(Arrays.toString(keysTryout));
+        String[] infoTryout = testertree.infoToArray();
+        System.out.println(Arrays.toString(infoTryout));*/
+        RandomTreeDanny.rand_ops(100);
     }
 }
