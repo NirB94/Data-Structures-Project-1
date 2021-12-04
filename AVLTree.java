@@ -297,7 +297,7 @@ public class AVLTree {
    {
 	   IAVLNode deletedNode = generalSearch(k);
 	   int numOfOps = 0;
-	   if (deletedNode == null) {
+	   if (deletedNode == null || deletedNode.getKey() != k) {
 		   return -1;
 	   }
 	   else {
@@ -562,9 +562,31 @@ public class AVLTree {
    * Returns a sorted array which contains all keys in the tree,
    * or an empty array if the tree is empty.
    */
-  public int[] keysToArray()
+  public int[] keysToArray() // This one is O(1), but it calls for a recursive function of O(n) and therefore O(n) total.
   {
-        return new int[33]; // to be replaced by student code
+	  if (empty()) { // If tree is empty - return an empty array just like they wanted
+		  return new int[]{};
+	  }
+	  int[] arrayOfKeys = new int[this.root.getSize()]; // Initializing array
+	  int[] index = new int[]{0}; // This array will serve as index.
+	  return keysToArrayRec(this.root, arrayOfKeys, index); // Calls for a recursive function
+  }
+
+  private int[] keysToArrayRec(IAVLNode node, int[] array, int[] index) { // Travels in order and adds to the array. O(n)
+	  if (node.isRealNode()) {
+		  keysToArrayRec(node.getLeft(), array, index);
+		  array[index[0]++] = node.getKey();
+		  keysToArrayRec(node.getRight(), array, index);
+	  }
+	  /*if (node.getLeft().isRealNode()) { // Means we can go left
+		  keysToArrayRec(node.getLeft(), array, index);
+	  }
+		  array[index[0]++] = node.getKey(); // If going left is no more possible.
+
+	  if (node.getRight().isRealNode()) { // Means we go right
+		  keysToArrayRec(node.getRight(), array, index);
+	  }*/
+	  return array;
   }
 
   /**
@@ -576,7 +598,24 @@ public class AVLTree {
    */
   public String[] infoToArray()
   {
-        return new String[55]; // to be replaced by student code
+	  if (empty()) { // If tree is empty - return an empty array just like they wanted
+		  return new String[]{};
+	  }
+	  String[] arrayOfInfo = new String[this.root.getSize()]; // Initializing array
+	  int[] index = new int[]{0}; // This array will serve as index.
+	  return infoToArrayRec(this.root, arrayOfInfo, index); // Calls for a recursive function
+  }
+
+  private String[] infoToArrayRec(IAVLNode node, String[] array, int[] index) { // Travels in order and adds to the array. O(n)
+	  if (node.getLeft().isRealNode()) { // Means we can go left
+		  infoToArrayRec(node.getLeft(), array, index);
+	  }
+	  array[index[0]++] = node.getValue(); // If going left is no more possible.
+
+	  if (node.getRight().isRealNode()) { // Means we go right
+		  infoToArrayRec(node.getRight(), array, index);
+	  }
+	  return array;
   }
 
    /**
