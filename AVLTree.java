@@ -1,5 +1,3 @@
-import java.util.Arrays;
-
 /**
  *
  * AVLTree
@@ -10,11 +8,11 @@ import java.util.Arrays;
  */
 
 public class AVLTree {
-	IAVLNode root;
-	IAVLNode min;
-	IAVLNode max;
-	int size;
-	IAVLNode EXT = new AVLNode(-1, null);
+	private IAVLNode root;
+	private IAVLNode min;
+	private IAVLNode max;
+	private int size;
+	private IAVLNode EXT = new AVLNode(-1, null);
 
 	public AVLTree() {
 		this.root = null;
@@ -27,7 +25,7 @@ public class AVLTree {
 
 	/** New constructor
 	 *
-	 * @param newRoot
+	 * @param newRoot newRoot
 	 *
 	 * @post New tree's root's parent is now null and not the previous parent (if existed).
 	 */
@@ -55,7 +53,7 @@ public class AVLTree {
    * Returns the info of an item with key k if it exists in the tree.
    * otherwise, returns null.
    */
-  public String search(int k) { // Calls for recursive function. O(1) (Inside function is O(logn)).
+  public String search(int k) { // Calls for Iterative function. O(1) (Inside function is O(logn)). O(logn) total.
 	  IAVLNode resultNode = generalSearch(k);
 	  if (resultNode == null) {
 		  return null;
@@ -146,7 +144,7 @@ public class AVLTree {
    private boolean isLegalRD(int[] rD) { // Checks if a given rank Difference is legal according to AVL definition. O(1)
 	   int[][] legalRD = {{1,1}, {1,2}, {2,1}};
 	   for(int[] possibleRD : legalRD) {
-		   if (Arrays.equals(possibleRD, rD)) {
+		   if (rD[0] == possibleRD[0] && rD[1] == possibleRD[1]) {
 			   return true;
 		   }
 	   }
@@ -163,7 +161,7 @@ public class AVLTree {
    }
 
    private void updateTreeFields() {
-       this.min = root.getMin();
+	   this.min = root.getMin();
        this.max = root.getMax();
        this.size = root.getSize();
    }
@@ -171,7 +169,6 @@ public class AVLTree {
    private int updateSizeInTree(IAVLNode node) { // O(1)
 	   int inputSize = 0;
 	   if (node.getKey() != -1) {
-		   IAVLNode left = node.getLeft();
 		   inputSize = node.getLeft().getSize() + node.getRight().getSize() + 1;
 	   }
 	   return inputSize;
@@ -188,34 +185,30 @@ public class AVLTree {
 
    private int rebalanceInsert(IAVLNode node) { // Rebalance from this node and go up. O(logn)
 	   int numOfOperations = 0;
-	   int[][] rDParent4Promote = {{0,1}, {1,0}};
-	   int[][] rDParent4Rotate = {{0,2}, {2,0}};
-	   int[][] rdNode4Rotate = {{1,2}, {2,1}};
-	   int[] specialJoinRDCase = {1,1};
 	   IAVLNode parent = node.getParent(); // Doing most operations in relation to parent, stating the child as input because it's more convenient that determining every time whether it's left child or right child.
        while (parent != null) {
 		   int[] parentRD = updateRankDifferenceInTree(parent);
 		   if (!isLegalRD(parentRD)) {
 			   int[] nodeRD = node.getRankDifference();
-			   if (Arrays.asList(rDParent4Promote).contains(parentRD)) { // Means parent's rD is either [0,1] or [1,0]
+			   if ((parentRD[0] == 0 && parentRD[1] == 1) || (parentRD[0] == 1 && parentRD[1] == 0)) { // Means parent's rD is either [0,1] or [1,0]
 				   promote(parent);
 				   numOfOperations++;
-			   } else if (Arrays.equals(parentRD, rDParent4Rotate[0]) && Arrays.equals(nodeRD, rdNode4Rotate[0])) { // First rotate case
+			   } else if ((parentRD[0] == 0 && parentRD[1] == 2) && (nodeRD[0] == 1 && nodeRD[1] == 2)) { // Parent is (0,2) and node is (1,2)
 				   rotateRight(parent);
 				   demote(parent);
 				   numOfOperations += 2;
-			   } else if (Arrays.equals(parentRD, rDParent4Rotate[1]) && Arrays.equals(nodeRD, rdNode4Rotate[1])) { // Its symmetrical counterpart
+			   } else if ((parentRD[0] == 2 && parentRD[1] == 0) && (nodeRD[0] == 2 && nodeRD[1] == 1)) { // Its symmetrical counterpart: Parent (2,0), node (2,1)
 				   rotateLeft(parent);
 				   demote(parent);
 				   numOfOperations += 2;
-			   } else if (Arrays.equals(parentRD, rDParent4Rotate[0]) && Arrays.equals(nodeRD, rdNode4Rotate[1])) { // Second rotate case.
+			   } else if ((parentRD[0] == 0 && parentRD[1] == 2) && (nodeRD[0] == 2 && nodeRD[1] == 1)) { // Parent is (0,2) and node is (2,1)
 				   promote(node.getRight());
 				   demote(node);
 				   rotateLeft(node);
 				   rotateRight(parent);
 				   demote(parent);
 				   numOfOperations += 5;
-			   } else if (Arrays.equals(parentRD, rDParent4Rotate[1]) && Arrays.equals(nodeRD, rdNode4Rotate[0])) { // Its symmetrical counterpart
+			   } else if ((parentRD[0] == 2 && parentRD[1] == 0) && (nodeRD[0] == 1 && nodeRD[1] == 2)) { // Its symmetrical counterpart:  Parent (2,0), node (1,2)
 				   promote(node.getLeft());
 				   demote(node);
 				   rotateRight(node);
@@ -223,12 +216,12 @@ public class AVLTree {
 				   demote(parent);
 				   numOfOperations += 5;
 			   }
-			   else if (Arrays.equals(nodeRD, specialJoinRDCase)) { // Special case relevant only for joining trees
-				   if (Arrays.equals(parentRD, rDParent4Rotate[0])) { // node is (1,1) left child to a (0,2) parent
+			   else if (nodeRD[0] == 1 && nodeRD[1] == 1) { // Special case relevant only for joining trees. node is (1,1)
+				   if (parentRD[0] == 0 && parentRD[1] == 2) { // node is (1,1) left child to a (0,2) parent
 					   rotateRight(parent);
 					   promote(node);
 				   }
-				   else if (Arrays.equals(parentRD, rDParent4Rotate[1])) { // node is (1,1) right child to a (2,0) parent
+				   else if (parentRD[0] == 2 && parentRD[1] == 0) { // node is (1,1) right child to a (2,0) parent
 					   rotateLeft(parent);
 					   promote(node);
 				   }
@@ -310,18 +303,27 @@ public class AVLTree {
 	   else {
 		   if (isBinary(deletedNode)) { // Node is binary
 			   binSuccessor(deletedNode); // Find its successor and replace it!
-			   // Now node is either unary or a leaf.
+			   // Node is now either unary or a leaf.
 			   // Bear in mind that current tree is not necessarily a BST nor AVL tree! But we'll fix it
 		   }
 		   if (isLeaf(deletedNode)) {
 			   IAVLNode parent = deletedNode.getParent();
 			   deleteALeaf(deletedNode);
-			   updateFields(parent);
-			   if (Arrays.equals(parent.getRankDifference(), new int[]{2, 2})) { // Special case from other rebalance cases that parent became a leaf
-				   demote(parent);
-				   numOfOps++;
+			   if (empty()) { // Means we just deleted the root and tree is now empty - no rebalance steps required
+				   return 0;
 			   }
-			   numOfOps += rebalanceDelete(parent);
+				   updateFields(parent);
+				   int[] parentRD = parent.getRankDifference();
+				   if (parentRD[0] == 2 && parentRD[1] == 2) { // Special case from other rebalance cases that parent became a leaf
+					   demote(parent);
+					   numOfOps++;
+				   }
+				   if (parent.getLeft().isRealNode()) {
+					   numOfOps += rebalanceDelete(parent.getLeft());
+				   }
+				   else if (parent.getRight().isRealNode()) {
+					   numOfOps += rebalanceDelete(parent.getRight());
+				   }
 		   }
 		   else if (isUnary(deletedNode)) {
 			   IAVLNode child = deletedNode.getLeft().isRealNode() ? deletedNode.getLeft() : deletedNode.getRight(); // Get the deleted unary node child, either one.
@@ -329,6 +331,7 @@ public class AVLTree {
 			   numOfOps += rebalanceDelete(child); // Start from child and go up
 		   }
 	   }
+	   numOfOps += rebalanceRoot();
 	   return numOfOps;
    }
 
@@ -350,73 +353,70 @@ public class AVLTree {
 	   while (succs.getHeight() != -1) {
 		   if (succs.getLeft().getHeight() != -1) {
 			   succs = succs.getLeft();
+		   }
+		   else {
 			   break;
 		   }
 	   }
-	   if (node.getRight().getKey() == succs.getKey()) { // Means successor is  nodes right child
-		   switchForClose(node);
+	   if (succs.isRealNode()) {
+		   switchNodes(node, succs);
 	   }
-	   else {
-		   switchForFar(node, succs);
-	   }
+	   updateFields(node);
+	   updateFields(succs);
+	   updateTreeFields();
    }
 
-   private void switchForClose (IAVLNode node) { // Changes pointers for node and its right child (successor). O(1)
-	   IAVLNode succs = node.getRight();
+   private void switchNodes(IAVLNode node, IAVLNode succs) { // Switch places of a node and its successor. O(1)
 	   IAVLNode parent = node.getParent();
-	   if (node.getKey() > parent.getKey()) { // x was a right child
-		   parent.setRight(succs);
-	   }
-	   else { // x was a left child
-		   parent.setLeft(succs);
+	   IAVLNode nodeLeft = node.getLeft(); // The nodes Left child
+	   IAVLNode nodeRight = node.getRight(); // nodeRight may be succs itself
+	   IAVLNode succsParent = succs.getParent(); // succsParent may be node itself
+	   IAVLNode succsRight = succs.getRight(); // may be EXT
+	   /* general switches relevant for all cases: */
+	   succs.setLeft(nodeLeft);
+	   nodeLeft.setParent(succs); // Both ways
+	   node.setRight(succsRight);
+	   if (succsRight.isRealNode()) {
+		   succsRight.setParent(node); // Both ways, only if succsRight is NOT EXT
 	   }
 	   succs.setParent(parent);
-	   node.setParent(succs);
-	   node.setRight(succs.getRight());
-	   if (node.getRight().isRealNode()) {
-		   node.getRight().setParent(node);
+	   if (parent != null) { // Means node is not the root!
+		   if (parent.getLeft().getKey() == node.getKey()) { // Node is parents left child
+			   parent.setLeft(succs); // Both ways
+		   } else { // Node is parents right child
+			   parent.setRight(succs);
+		   }
 	   }
-	   succs.setRight(node);
-	   IAVLNode temp = node.getLeft();
-	   temp.setParent(succs);
-	   succs.setLeft(temp);
-	   node.setLeft(succs.getLeft());
-   }
-
-   private void switchForFar(IAVLNode node, IAVLNode successor) { // Changes pointers for node and its successor from far away down the tree. O(1)
-	   IAVLNode parent = node.getParent();
-	   if (node.getKey() > parent.getKey()) { // x was a right child
-		   parent.setRight(successor);
+	   else { // Node IS the root (but not anymore - now succs is the root!)
+		   this.root = succs;
 	   }
-	   else { // x was a left child
-		   parent.setLeft(successor);
+	   /* Assignment differ for special cases: */
+	   if (nodeRight.getKey() == succs.getKey()) { // Node is succs parent
+		   succs.setRight(node);
+		   node.setParent(succs);
 	   }
-	   node.setParent(successor.getParent());
-	   successor.getParent().setLeft(node);
-	   successor.setParent(parent);
-	   IAVLNode tempRight = node.getRight();
-	   tempRight.setParent(successor);
-	   node.setRight(successor.getRight());
-	   if (successor.getRight().isRealNode()) {
-		   successor.getRight().setParent(node);
+	   else  { // Node is not succs parent
+		   node.setParent(succsParent);
+		   succsParent.setLeft(node);
+		   succs.setRight(nodeRight);
+		   nodeRight.setParent(succs);
 	   }
-	   successor.setRight(tempRight);
-	   IAVLNode tempLeft = node.getLeft();
-	   tempLeft.setParent(successor);
-	   successor.setLeft(tempLeft);
 	   node.setLeft(EXT);
-	   // No need to change successor.left's parent as it's always an EXT
-   }
+   } // Result is NOT BST nor AVL but invariant is maintained as the node is deleted immediately after the switch
 
-   private void deleteALeaf(IAVLNode node) { // Deletes a leaf from tree. O(1)
+	private void deleteALeaf(IAVLNode node) { // Deletes a leaf from tree. O(1)
 	   IAVLNode parent = node.getParent();
 	   node.setParent(null);
-	   if (node.getKey() == parent.getLeft().getKey()) { // node was a left child
-		   parent.setLeft(EXT);
-	   }
-	   else { // node was a right child
-		   parent.setRight(EXT);
-	   }
+		if (node.getKey() != this.root.getKey()) { // Means deleting an inside leaf, Tree won't remain empty
+			if (node.getKey() == parent.getLeft().getKey()) { // node was a left child
+				parent.setLeft(EXT);
+			} else { // node was a right child
+				parent.setRight(EXT);
+			}
+		}
+		else { // Else is ok, delete the node and get an empty tree
+			this.root = null;
+		}
 	   node.setLeft(null);
 	   node.setRight(null);
    }
@@ -426,50 +426,50 @@ public class AVLTree {
 	   node.setParent(null);
 	   if (node.getLeft().isRealNode()) { // node had a left child and right was EXT
 		   IAVLNode left = node.getLeft();
-		   if (node.getKey() == parent.getLeft().getKey()) { // node was a left child
-			   parent.setLeft(left);
-		   }
-		   else { // node was a right child
-			   parent.setRight(left);
-		   }
-		   left.setParent(parent);
+		   setParentChild(node, parent, left);
 	   }
 	   else { // node had a right child and left was EXT
 		   IAVLNode right = node.getRight();
-		   if (node.getKey() == parent.getLeft().getKey()) {
-			   parent.setLeft(right);
-		   }
-		   else {
-			   parent.setRight(right);
-		   }
-		   right.setParent(parent);
+		   setParentChild(node, parent, right);
 	   }
 	   node.setLeft(null);
 	   node.setRight(null);
    }
 
-   private int rebalanceDelete(IAVLNode node) { // Rebalances the tree after node deletion. O(logn)
-	   int[][] parentWrongRD = new int[][] {{2,2}, {3,1}, {1,3}};
-	   int[][] otherChildRD = {{1,1}, {1,2}, {2,1}};
+	private void setParentChild(IAVLNode node, IAVLNode parent, IAVLNode child) {
+		if (node.getKey() == root.getKey()) { // Means we're deleting the root
+			this.root = child;
+		}
+		else { // Not deleting the root
+			if (node.getKey() == parent.getLeft().getKey()) { // node was a left child
+				parent.setLeft(child);
+			} else { // node was a right child
+				parent.setRight(child);
+			}
+		}
+		child.setParent(parent);
+	}
+
+	private int rebalanceDelete(IAVLNode node) { // Rebalances the tree after node deletion. O(logn)
 	   IAVLNode parent = node.getParent();
 	   int numOfOps = 0;
 	   while (parent != null) {
 		   updateFields(parent);
 		   int[] parentRD = parent.getRankDifference();
-		   if (Arrays.equals(parentRD, parentWrongRD[0])) { // Parent is a (2,2) node
+		   if (parentRD[0] == 2 && parentRD[1] == 2) { // Parent is a (2,2) node
 			   demote(parent);
 			   numOfOps++;
 		   }
-		   else if (Arrays.equals(parentRD, parentWrongRD[1])) { // Parent is a (3,1) node, 3 cases
+		   else if (parentRD[0] == 3 && parentRD[1] == 1) { // Parent is a (3,1) node, 3 cases
 			   IAVLNode rightChild = parent.getRight(); // Get the right child, which wasn't in the deletion route
 			   int[] rightRD = rightChild.getRankDifference();
-			   if (Arrays.equals(rightRD, otherChildRD[0])) { // Right child is a (1,1) node
+			   if (rightRD[0] == 1 && rightRD[1] == 1) { // Right child is a (1,1) node
 				   rotateLeft(parent);
 				   demote(parent);
 				   promote(rightChild);
 				   numOfOps += 3;
 			   }
-			   else if (Arrays.equals(rightRD, otherChildRD[1])) { // Right child is a (1,2) node
+			   else if (rightRD[0] == 1 && rightRD[1] == 2) { // Right child is a (1,2) node
 				   IAVLNode leftRightChild = rightChild.getLeft();
 				   rotateRight(node);
 				   rotateLeft(parent);
@@ -478,22 +478,22 @@ public class AVLTree {
 				   demote(parent); demote(parent); // Double demote, counts as 2 operations
 				   numOfOps += 6;
 			   }
-			   else if (Arrays.equals(rightRD, otherChildRD[2])) { // Right child is a (2,1) node
+			   else if (rightRD[0] == 2 && rightRD[1] == 1) { // Right child is a (2,1) node
 				   rotateLeft(parent);
 				   demote(parent); demote(parent); // Double demote
 				   numOfOps += 3;
 			   }
 		   }
-		   else if (Arrays.equals(parentRD, parentWrongRD[2])) { // Parent is a (3,1) node, all symmetrical cases to the above
+		   else if (parentRD[0] == 1 && parentRD[1] == 3) { // Parent is a (3,1) node, all symmetrical cases to the above
 			   IAVLNode leftChild = parent.getLeft(); // Get the left child, which wasn't in the deletion route
 			   int[] leftRD = leftChild.getRankDifference();
-			   if (Arrays.equals(leftRD, otherChildRD[0])) { // Left child is a (1,1) node
+			   if (leftRD[0] == 1 && leftRD[1] == 1) { // Left child is a (1,1) node
 				   rotateRight(parent);
 				   demote(parent);
 				   promote(leftChild);
 				   numOfOps += 3;
 			   }
-			   else if (Arrays.equals(leftRD, otherChildRD[2])) { // Left child is a (2,1) node
+			   else if (leftRD[0] == 2 && leftRD[1] == 1) { // Left child is a (2,1) node
 				   IAVLNode rightLeftChild = leftChild.getRight();
 				   rotateLeft(node);
 				   rotateRight(parent);
@@ -502,7 +502,7 @@ public class AVLTree {
 				   demote(parent); demote(parent); // Double demote
 				   numOfOps += 6;
 			   }
-			   else if (Arrays.equals(leftRD, otherChildRD[1])) { // Left child is a (1,2) node
+			   else if (leftRD[0] == 1 && leftRD[1] == 2) { // Left child is a (1,2) node
 				   rotateRight(parent);
 				   demote(parent); demote(parent); // Double demote
 				   numOfOps += 3;
@@ -513,6 +513,25 @@ public class AVLTree {
 		   parent = parent.getParent();
 	   }
 	   return numOfOps;
+   }
+
+   private int rebalanceRoot() { // In special cases the root is not rebalanced. O(1)
+	   int[] rootRD = this.root.getRankDifference();
+	   if (!isLegalRD(rootRD)) { // Check if these operations are even necessary
+		   if (rootRD[0] == 2 && rootRD[1] == 2) { // Root is a (2,2) node
+			   demote(root);
+			   return 1;
+		   }
+		   else if (rootRD[0] == 1 && rootRD[1] == 3) { // Root is a (3,1) node. 3 cases.
+			   IAVLNode left = root.getLeft();
+			   return rebalanceDelete(left); // Calls for rebalanceDelete on left node to ensure rebalancing. Two iterations TOTAL
+		   }
+		   else if (rootRD[0] == 3 && rootRD[1] == 1) { // Symmetrical cases
+			   IAVLNode right = root.getRight();
+			   return rebalanceDelete(right); // Same here, two iterations TOTAL.
+		   }
+	   }
+	   return 0;
    }
 
    /**
@@ -630,6 +649,9 @@ public class AVLTree {
     */   
    public int join(IAVLNode x, AVLTree t) // Joins a given AVL tree t and a node x to this tree. O(log)
    {
+	   if (t == null) {
+		   t = new AVLTree(); // Make t an empty tree
+	   }
 	   if (t.empty()) { // t is empty tree, just insert x to this.
 		   if (this.empty()) { // Both trees are empty
 			   this.root = x;
@@ -821,7 +843,7 @@ public class AVLTree {
 
 
 		public boolean isRealNode() { // Checks if the node is an internal node or an external one. O(1)
-			return this.getHeight() != -1;
+			return (this.getHeight() != -1);
 		}
 
 
