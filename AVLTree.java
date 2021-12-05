@@ -1,3 +1,7 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  *
  * AVLTree
@@ -12,7 +16,7 @@ public class AVLTree {
 	private IAVLNode min;
 	private IAVLNode max;
 	private int size;
-	private IAVLNode EXT = new AVLNode(-1, null);
+	private final IAVLNode EXT = new AVLNode(-1, null);
 
 	public AVLTree() {
 		this.root = null;
@@ -161,7 +165,7 @@ public class AVLTree {
 	   node.updateRankDifference(updateRankDifferenceInTree(node));
    }
 
-   private void updateTreeFields() {
+   private void updateTreeFields() { // O(1)
 	   this.min = root.getMin();
        this.max = root.getMax();
        this.size = root.getSize();
@@ -250,13 +254,18 @@ public class AVLTree {
 		   } else { // Parent is pop's left child (can't be equal)
 			   grandpa.setLeft(node);
 		   }
+		   updateFields(grandpa);
 	   }
 	   parent.setLeft(rightChild);
 	   if (rightChild != null) {
 		   rightChild.setParent(parent);
 	   }
-	   node.setRight(parent);
+	   if (node != EXT) {
+		   node.setRight(parent);
+		   updateFields(node);
+	   }
 	   parent.setParent(node);
+	   updateFields(parent);
    }
 
    private void rotateLeft(IAVLNode parent) { // Mind that we rotate parent with its right child. O(1)
@@ -267,19 +276,24 @@ public class AVLTree {
 	   if (grandma == null) { // Parent is the root
 		   this.root = node;
 	   }
-	   else {
+	   else { // grandma != null - parent is not the root
 		   if (grandma.getKey() < parent.getKey()) { // Means parent is mah's right child
 			   grandma.setRight(node);
 		   } else { // Parent is mah's right child (can't be equal)
 			   grandma.setLeft(node);
 		   }
+		   updateFields(grandma);
 	   }
 	   parent.setRight(leftChild);
 	   if (leftChild != null) {
 		   leftChild.setParent(parent);
 	   }
-	   node.setLeft(parent);
+	   if (node != EXT) {
+		   node.setLeft(parent);
+		   updateFields(node);
+	   }
 	   parent.setParent(node);
+	   updateFields(parent);
    }
 
    private void promote(IAVLNode node) { // O(1)
@@ -322,7 +336,7 @@ public class AVLTree {
 			   int[] parentRD = parent.getRankDifference();
 			   if (parentRD[0] == 2 && parentRD[1] == 2) { // Special case from other rebalance cases that parent became a leaf
 				   demote(parent);
-				   numOfOps++;
+				   numOfOps += 1 + rebalanceDelete(parent);
 			   }
 			   if (parent.getLeft().isRealNode()) { // To start rebalance from child, not from parent - might cover some edge cases
 				   numOfOps += rebalanceDelete(parent.getLeft());
@@ -338,6 +352,7 @@ public class AVLTree {
 		   }
 	   }
 	   numOfOps += rebalanceRoot();
+	   updateFields(this.root);
 	   return numOfOps;
    }
 
@@ -516,6 +531,7 @@ public class AVLTree {
 			   }
 		   }
 		   updateFields(parent);
+		   updateFields(node);
 		   node = parent;
 		   parent = parent.getParent();
 	   }
@@ -772,6 +788,74 @@ public class AVLTree {
 	   return (bigRank - smallRank + 1);
    }
 
+   public int[] switchRandom () { // DO NOT TRY THIS AT HOME
+	   int n = 0;
+	   int[] numOfSwitchesPeri = new int[5];
+	   for (int i = 1; i <= 5; i++) {
+		   n = (int) (1000 * Math.pow(2, i));
+		   List<Integer> nodes = new ArrayList<>(n); // Be sure to import java.util.List; and import java.util.ArrayList;
+		   for (int j = 0; j < n; j++) {
+			   nodes.add(j+1);
+		   }
+		   Collections.shuffle(nodes); // And import java.util.Collections;
+		   int counter = 0;
+		   int curr = 0;
+		   while (curr < n - 1) {
+			   for (int next = curr + 1; next < n; next++) {
+				   if (nodes.get(next) < nodes.get(curr)) {
+					   int temp = nodes.get(next);
+					   nodes.set(next, nodes.get(curr));
+					   nodes.set(curr,temp);
+					   counter++;
+					   curr = 0;
+					   break;
+				   }
+				   else {
+					   curr++;
+				   }
+			   }
+		   }
+		   System.out.println(counter);
+		   numOfSwitchesPeri[i-1] = counter;
+	   }
+	return numOfSwitchesPeri;
+   }
+
+   public int insertionSort(int k, String info) {
+	   IAVLNode node = new AVLNode(k, info);
+	   IAVLNode parent = parentFingerSearch(k);
+
+   }
+
+   private IAVLNode parentFingerSearch(int k) {
+	   IAVLNode currNode = this.max;
+	   while (currNode.getKey() > root.getKey()) {
+		   IAVLNode parent = currNode.getParent();
+		   if (k < parent.getKey()) {
+			   currNode = parent;
+		   }
+		   else {
+			   IAVLNode left = currNode.getLeft();
+			   if (left.isRealNode()) {
+				   return searchFromRoot(k , left);
+			   }
+			   else {
+				   return currNode;
+			   }
+		   }
+	   }
+	   return searchFromRoot(k, currNode);
+   }
+
+   private IAVLNode searchFromRoot(int k, IAVLNode root) {
+	   AVLTree newTree = new AVLTree(root);
+	   return newTree.generalSearch(k);
+   }
+
+   private int fingerSearch(int k) {
+
+   }
+
 	/** 
 	 * public interface IAVLNode
 	 * ! Do not delete or modify this - otherwise all tests will fail !
@@ -848,7 +932,7 @@ public class AVLTree {
 		}
 
 
-		public void setLeft(IAVLNode node) { // Sets the left sub-tree of the given node. Every node in left should be smaller the the node. O(1)
+		public void setLeft(IAVLNode node) { // Sets the left sub-tree of the given node. Every node in left should be smaller than the node. O(1)
 		   this.left = node;
 		}
 
@@ -858,7 +942,7 @@ public class AVLTree {
 		}
 
 
-		public void setRight(IAVLNode node) { // Sets the right sub-tree of the given node. Every node in right should be greater then the node. O(1)
+		public void setRight(IAVLNode node) { // Sets the right sub-tree of the given node. Every node in right should be greater than the node. O(1)
 		   right = node;
 		}
 
@@ -893,7 +977,7 @@ public class AVLTree {
 	    }
 
 
-		public void updateRankDifference(int[] insertedRankDifference) { // Calculates rank differences between the node and its sub-trees.
+		public void updateRankDifference(int[] insertedRankDifference) { // Calculates rank differences between the node and its sub-trees. O(1)
 		   this.rankDifference = insertedRankDifference;
 		}
 
