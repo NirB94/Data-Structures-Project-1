@@ -20,7 +20,7 @@ public class AVLTree {
 		this.max = null;
 		this.size = 0;
 		this.EXT.setHeight(-1);
-		this.EXT.updateSize(0);
+		//this.EXT.updateSize(0);
 	}
 
 	/** New constructor
@@ -154,7 +154,8 @@ public class AVLTree {
    private void updateFields(IAVLNode node) { // Updates all fields of the node. O(1)
 	   node.updateMin();
 	   node.updateMax();
-	   node.updateSize(updateSizeInTree(node));
+	   node.updateSize();
+	   //node.updateSize(updateSizeInTree(node));
 	   node.updateBalanceFactor();
 	   node.setHeight(Math.max(node.getLeft().getHeight(), node.getRight().getHeight()) + 1); // Updates rank
 	   node.updateRankDifference(updateRankDifferenceInTree(node));
@@ -185,6 +186,7 @@ public class AVLTree {
 
    private int rebalanceInsert(IAVLNode node) { // Rebalance from this node and go up. O(logn)
 	   int numOfOperations = 0;
+	   updateFields(node);
 	   IAVLNode parent = node.getParent(); // Doing most operations in relation to parent, stating the child as input because it's more convenient that determining every time whether it's left child or right child.
        while (parent != null) {
 		   int[] parentRD = updateRankDifferenceInTree(parent);
@@ -250,7 +252,9 @@ public class AVLTree {
 		   }
 	   }
 	   parent.setLeft(rightChild);
-	   rightChild.setParent(parent);
+	   if (rightChild != null) {
+		   rightChild.setParent(parent);
+	   }
 	   node.setRight(parent);
 	   parent.setParent(node);
    }
@@ -271,7 +275,9 @@ public class AVLTree {
 		   }
 	   }
 	   parent.setRight(leftChild);
-	   leftChild.setParent(parent);
+	   if (leftChild != null) {
+		   leftChild.setParent(parent);
+	   }
 	   node.setLeft(parent);
 	   parent.setParent(node);
    }
@@ -312,18 +318,18 @@ public class AVLTree {
 			   if (empty()) { // Means we just deleted the root and tree is now empty - no rebalance steps required
 				   return 0;
 			   }
-				   updateFields(parent);
-				   int[] parentRD = parent.getRankDifference();
-				   if (parentRD[0] == 2 && parentRD[1] == 2) { // Special case from other rebalance cases that parent became a leaf
-					   demote(parent);
-					   numOfOps++;
-				   }
-				   if (parent.getLeft().isRealNode()) {
-					   numOfOps += rebalanceDelete(parent.getLeft());
-				   }
-				   else if (parent.getRight().isRealNode()) {
-					   numOfOps += rebalanceDelete(parent.getRight());
-				   }
+			   updateFields(parent);
+			   int[] parentRD = parent.getRankDifference();
+			   if (parentRD[0] == 2 && parentRD[1] == 2) { // Special case from other rebalance cases that parent became a leaf
+				   demote(parent);
+				   numOfOps++;
+			   }
+			   if (parent.getLeft().isRealNode()) { // To start rebalance from child, not from parent - might cover some edge cases
+				   numOfOps += rebalanceDelete(parent.getLeft());
+			   }
+			   else if (parent.getRight().isRealNode()) { // In case parent doesn't have a left child.
+				   numOfOps += rebalanceDelete(parent.getRight());
+			   }
 		   }
 		   else if (isUnary(deletedNode)) {
 			   IAVLNode child = deletedNode.getLeft().isRealNode() ? deletedNode.getLeft() : deletedNode.getRight(); // Get the deleted unary node child, either one.
@@ -421,7 +427,7 @@ public class AVLTree {
 	   node.setRight(null);
    }
 
-   private void deleteUnary(IAVLNode node) { // Deletes an unary node from tree. O(1)
+   private void deleteUnary(IAVLNode node) { // Deletes a unary node from tree. O(1)
 	   IAVLNode parent = node.getParent();
 	   node.setParent(null);
 	   if (node.getLeft().isRealNode()) { // node had a left child and right was EXT
@@ -451,6 +457,7 @@ public class AVLTree {
 	}
 
 	private int rebalanceDelete(IAVLNode node) { // Rebalances the tree after node deletion. O(logn)
+	   updateFields(node);
 	   IAVLNode parent = node.getParent();
 	   int numOfOps = 0;
 	   while (parent != null) {
@@ -578,14 +585,6 @@ public class AVLTree {
 		  array[index[0]++] = node.getKey();
 		  keysToArrayRec(node.getRight(), array, index);
 	  }
-	  /*if (node.getLeft().isRealNode()) { // Means we can go left
-		  keysToArrayRec(node.getLeft(), array, index);
-	  }
-		  array[index[0]++] = node.getKey(); // If going left is no more possible.
-
-	  if (node.getRight().isRealNode()) { // Means we go right
-		  keysToArrayRec(node.getRight(), array, index);
-	  }*/
 	  return array;
   }
 
@@ -607,12 +606,9 @@ public class AVLTree {
   }
 
   private String[] infoToArrayRec(IAVLNode node, String[] array, int[] index) { // Travels in order and adds to the array. O(n)
-	  if (node.getLeft().isRealNode()) { // Means we can go left
+	  if (node.isRealNode()) {
 		  infoToArrayRec(node.getLeft(), array, index);
-	  }
-	  array[index[0]++] = node.getValue(); // If going left is no more possible.
-
-	  if (node.getRight().isRealNode()) { // Means we go right
+		  array[index[0]++] = node.getValue();
 		  infoToArrayRec(node.getRight(), array, index);
 	  }
 	  return array;
@@ -796,7 +792,8 @@ public class AVLTree {
 		public int[] getRankDifference();
 		public void updateBalanceFactor();
 		public int getBalanceFactor();
-		public void updateSize(int inputSize);
+		public void updateSize();
+		//public void updateSize(int inputSize);
 		public int getSize();
 		public void updateMin();
 		public IAVLNode getMin();
@@ -835,7 +832,7 @@ public class AVLTree {
 		   this.parent = null;
 		   this.rankDifference = new int[2];
 		   this.bF = 0;
-		   this.size = 1;
+		   this.size = key > -1 ? 1 : 0;
 		   this.min = this;
 		   this.max = this;
 	   }
@@ -912,9 +909,13 @@ public class AVLTree {
 		   return bF;
 		}
 
-		public void updateSize(int inputSize) {
+		public void updateSize() {
+		   this.size = this.left.getSize() + this.right.getSize() + 1;
+		}
+
+		/*public void updateSize(int inputSize) {
 			this.size = inputSize;
-	   }
+	   }*/
 
 		public int getSize() {
 		   return this.size;
