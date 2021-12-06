@@ -243,7 +243,6 @@ public class AVLTree {
 	   IAVLNode node = parent.getLeft();
 	   IAVLNode grandpa = parent.getParent();
 	   IAVLNode rightChild = node.getRight();
-	   node.setParent(grandpa);
 	   if (grandpa == null) { // Means parent is the root!
 		   this.root = node;
 	   }
@@ -255,11 +254,14 @@ public class AVLTree {
 		   }
 		   updateFields(grandpa);
 	   }
-	   parent.setLeft(rightChild);
+	   if (node.isRealNode()) {
+		   node.setParent(grandpa);
+		   parent.setLeft(rightChild);
+	   }
 	   if (rightChild != null) {
 		   rightChild.setParent(parent);
 	   }
-	   if (node != EXT) {
+	   if (!node.isRealNode()) {
 		   node.setRight(parent);
 		   updateFields(node);
 	   }
@@ -713,6 +715,9 @@ public class AVLTree {
 	   if (t == null) {
 		   t = new AVLTree(); // Make t an empty tree
 	   }
+	   x.setParent(null);
+	   x.setLeft(EXT); x.setRight(EXT);
+	   updateFields(x);
 	   if (t.empty()) { // t is empty tree, just insert x to this.
 		   if (this.empty()) { // Both trees are empty
 			   this.root = x;
@@ -756,22 +761,24 @@ public class AVLTree {
 	   IAVLNode joinPoint = this.root;
 	   int bigRank = this.root.getHeight();
 	   int smallRank = small.root.getHeight();
-	   while (joinPoint.getHeight() > smallRank) { // Looking for the first node x with rank(x) <= small.rank()
-		   if (joinPoint.getLeft().getKey() == -1) { // Means we have reached the end of the branch
-			   x.setParent(joinPoint); // Set parent immediately as we have no use of x's parent.
-		   }
+	   while (joinPoint.getHeight() > smallRank && joinPoint.getLeft().isRealNode()) { // Looking for the first node x with rank(x) <= small.rank()
 		   joinPoint = joinPoint.getLeft();
 	   }
-	   x.setLeft(small.root);
-	   x.setRight(joinPoint);
-	   small.root.setParent(x);
-	   if (joinPoint.getParent() != null && joinPoint.getParent().getKey() != x.getKey()) { // Might cover special cases in split
-		   x.setParent(joinPoint.getParent());
-		   joinPoint.getParent().setLeft(x);
-	   }
-	   if (joinPoint.getKey() != -1) {
+	   if (joinPoint.getHeight() <= smallRank) {
+		   x.setRight(joinPoint);
+		   if (joinPoint.getParent() != null && joinPoint.getParent().getKey() != x.getKey()) { // Might cover special cases in split
+			   x.setParent(joinPoint.getParent());
+			   joinPoint.getParent().setLeft(x);
+		   }
 		   joinPoint.setParent(x);
 	   }
+	   else { // joinPoints rank is greater than smallRank!!
+		   x.setParent(joinPoint);
+		   joinPoint.setLeft(x);
+		   x.setRight(EXT);
+	   }
+	   x.setLeft(small.root);
+	   small.root.setParent(x);
 	   updateFields(x);
 	   if (x.getHeight() > bigRank) {
 		   this.root = x;
@@ -786,22 +793,24 @@ public class AVLTree {
 	   IAVLNode joinPoint = this.root;
 	   int bigRank = this.root.getHeight();
 	   int smallRank = small.root.getHeight();
-	   while (joinPoint.getHeight() > smallRank) { // Finds the first node x in big tree in which rank(x) <= rank(small_tree)
-		   if (joinPoint.getLeft().getKey() == -1) { // Means we have reached the end of the branch
-			   x.setParent(joinPoint); // Set parent immediately as we have no use of x's parent.
-		   }
+	   while (joinPoint.getHeight() > smallRank && joinPoint.getRight().isRealNode()) { // Finds the first node x in big tree in which rank(x) <= rank(small_tree)
 		   joinPoint = joinPoint.getRight();
 	   }
-	   x.setRight(small.root);
-	   x.setLeft(joinPoint);
-	   small.root.setParent(x);
-	   if (joinPoint.getParent() != null && joinPoint.getParent().getKey() != x.getKey()) { // Might cover special cases in split
-		   x.setParent(joinPoint.getParent());
-		   joinPoint.getParent().setRight(x);
-	   }
-	   if (joinPoint != EXT) {
+	   if (joinPoint.getHeight() <= smallRank) {
+		   x.setLeft(joinPoint);
+		   if (joinPoint.getParent() != null && joinPoint.getParent().getKey() != x.getKey()) { // Might cover special cases in split
+			   x.setParent(joinPoint.getParent());
+			   joinPoint.getParent().setRight(x);
+		   }
 		   joinPoint.setParent(x);
 	   }
+	   else {
+		   x.setParent(joinPoint);
+		   joinPoint.setRight(x);
+		   x.setLeft(EXT);
+	   }
+	   x.setRight(small.root);
+	   small.root.setParent(x);
 	   updateFields(x);
 	   if (x.getHeight() > bigRank) {
 		   this.root = x;
