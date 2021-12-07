@@ -56,17 +56,11 @@ public class AVLTree {
    */
   public String search(int k) { // Calls for Iterative function. O(1) (Inside function is O(logn)). O(logn) total.
 	  IAVLNode resultNode = generalSearch(k);
-	  if (resultNode == null) { // Means node not found
+	  if (resultNode == null || resultNode.getKey() != k) { // Means node not found
 		  return null;
 	  }
-	  if (resultNode.getKey() < k) { // Got the parent. Need to go right TODO CHECK IF NECESSARY
-		  return resultNode.getRight().getValue();
-	  }
-	  else if (resultNode.getKey() == k) { // Got the node! Get its value >:O !!
+	  else { // Got the node! Get its value >:O !!
 		  return resultNode.getValue();
-	  }
-	  else {
-		  return resultNode.getLeft().getValue(); // Got the parent, need to go left // TODO CHECK IF NECESSARY
 	  }
   }
 
@@ -77,7 +71,7 @@ public class AVLTree {
 		}
 		while (currNode.getHeight() > 0) { // While we're not looking at a leaf
 			if (currNode.getKey() == k) { // There's already a node with key k
-				return currNode;
+				return currNode; // For search
 			}
 			else if (k < currNode.getKey()) { // Go left (if possible)
 				if (currNode.getLeft().isRealNode()) {
@@ -157,8 +151,6 @@ public class AVLTree {
 	   node.updateMin();
 	   node.updateMax();
 	   node.updateSize();
-	   //node.updateSize(updateSizeInTree(node));
-	   node.updateBalanceFactor();
 	   node.setHeight(Math.max(node.getLeft().getHeight(), node.getRight().getHeight()) + 1); // Updates rank
 	   node.updateRankDifference(updateRankDifferenceInTree(node));
    }
@@ -637,6 +629,9 @@ public class AVLTree {
     */
    public int size() // O(1)
    {
+       if (empty()) {
+           return 0;
+       }
 	   return this.root.getSize(); // Returns num of nodes in tree. O(1)
    }
    
@@ -809,91 +804,6 @@ public class AVLTree {
 	   return (bigRank - smallRank + 1);
    }
 
-   /*public int switchRandom (List<Integer> shuffled) { // TODO DELETE DIS!
-	   int n = shuffled.size();
-	   int counter = 0;
-	   for (int curr = 0; curr < n; curr++){
-		   for (int next = curr + 1; next < n; next++) {
-			   if (shuffled.get(next) < shuffled.get(curr)) {
-				   counter++;
-			   }
-		   }
-	   }
-	   return counter;
-   }
-
-   public int seriesOfInsertionSort(List<Integer> nodes) {
-	   int n = nodes.size();
-	   int cost = 0;
-	   for (Integer node : nodes) {
-		   cost += insertionSort(node, "");
-	   }
-	   return cost;
-   }
-
-   public int insertionSort(int k, String info) {
-	   IAVLNode node = new AVLNode(k, info);
-	   if (this.empty()) {
-		   insert(k, info);
-		   return 1;
-	   }
-	   int numOfNodes = FingerSearch(k);
-	   insert(k, info);
-	   return numOfNodes;
-   }
-
-   private int FingerSearch(int k) {
-	   IAVLNode currNode = this.max;
-	   int numOfNodes = 1;
-	   while (currNode.getKey() > root.getKey()) {
-		   IAVLNode parent = currNode.getParent();
-		   if (k < parent.getKey()) { // Need to go UP
-			   currNode = parent;
-			   numOfNodes++;
-		   }
-		   else {
-			   IAVLNode left = currNode.getLeft();
-			   if (left.isRealNode()) {
-				   numOfNodes += searchFromRoot(k , left); // Search the left sub-tree of currNode
-			   }
-			   return numOfNodes + 1;
-		   }
-	   } // Node was not found in right sub-tree of the tree.
-	   return numOfNodes += searchFromRoot(k, currNode); // Search the left sub-tree
-   }
-
-   private int searchFromRoot(int k, IAVLNode root) { // Regular binary search, much like generalSearch. Returns number of nodes until destination.
-	   IAVLNode currNode = root;
-	   int numOfNodes = 0;
-	   if (currNode == null) { // Means tree is empty
-		   return 1; // What we chose to return
-	   }
-	   while (currNode.getHeight() > 0) { // While we're not looking at a leaf
-		   if (currNode.getKey() == k) { // There's already a node with key k
-			   return numOfNodes + 1;
-		   }
-		   else if (k < currNode.getKey()) { // Go left (if possible)
-			   if (currNode.getLeft().isRealNode()) {
-				   currNode = currNode.getLeft();
-				   numOfNodes++;
-			   }
-			   else {
-				   return numOfNodes + 1;
-			   }
-		   }
-		   else { // Go right (if possible)
-			   if (currNode.getRight().isRealNode()) {
-				   currNode = currNode.getRight();
-				   numOfNodes++;
-			   }
-			   else {
-				   return numOfNodes + 1;
-			   }
-		   }
-	   }
-	   return numOfNodes + 1;
-   } */
-
 	/** 
 	 * public interface IAVLNode
 	 * ! Do not delete or modify this - otherwise all tests will fail !
@@ -912,10 +822,7 @@ public class AVLTree {
     	public int getHeight(); // Returns the height of the node (-1 for virtual nodes).
 		public void updateRankDifference(int[] insertedRankDifference);
 		public int[] getRankDifference();
-		public void updateBalanceFactor();
-		public int getBalanceFactor();
 		public void updateSize();
-		//public void updateSize(int inputSize);
 		public int getSize();
 		public void updateMin();
 		public IAVLNode getMin();
@@ -939,7 +846,6 @@ public class AVLTree {
 	  private IAVLNode right;
 	  private IAVLNode parent; // Gender fluid
 	  private int[] rankDifference;
-	  private int bF; // TODO DELETE
 	  private int size;
 	  private IAVLNode min;
 	  private IAVLNode max;
@@ -953,7 +859,6 @@ public class AVLTree {
 		   this.right = null;
 		   this.parent = null;
 		   this.rankDifference = new int[2];
-		   this.bF = 0; // TODO DELETE
 		   this.size = key > -1 ? 1 : 0;
 		   this.min = this;
 		   this.max = this;
@@ -1021,14 +926,6 @@ public class AVLTree {
 
 		public int[] getRankDifference() { // Gets rank difference of node. O(1)
 		   return rankDifference;
-		}
-
-		public void updateBalanceFactor() { // TODO DELETE
-		   bF = this.key != -1 ? (this.left.getHeight() - this.right.getHeight()) : -1;
-		}
-
-		public int getBalanceFactor() { // TODO DELETE
-		   return bF;
 		}
 
 		public void updateSize() { // Recalculates the size of the sub-tree with node as its root. O(1)
