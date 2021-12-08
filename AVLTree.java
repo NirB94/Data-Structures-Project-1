@@ -1,5 +1,3 @@
-import java.util.List;
-
 /**
  *
  * AVLTree
@@ -102,7 +100,7 @@ public class AVLTree {
    * A promotion/rotation counts as one re-balance operation, double-rotation is counted as 2.
    * Returns -1 if an item with key k already exists in the tree.
    */
-   public int insert(int k, String i) { // Searching the location to insert the node and rebalancing the tree, including updating all fields of nodes in the path from root to the inserted node.
+   public int insert(int k, String i) { // Searching the location to insert the node and rebalancing the tree, including updating all fields of nodes in the path from root to the inserted node. O(logn)
 	   IAVLNode newNode = new AVLNode(k, i);
 	   IAVLNode newParent = generalSearch(k);
 	   if (newParent == null) { // Means tree is empty, and we need to initialize root
@@ -161,15 +159,7 @@ public class AVLTree {
        this.size = root.getSize();
    }
 
-   private int updateSizeInTree(IAVLNode node) { // O(1)
-	   int inputSize = 0;
-	   if (node.getKey() != -1) {
-		   inputSize = node.getLeft().getSize() + node.getRight().getSize() + 1;
-	   }
-	   return inputSize;
-   }
-
-   private int[] updateRankDifferenceInTree(IAVLNode node) { // O(1)
+	private int[] updateRankDifferenceInTree(IAVLNode node) { // O(1)
 	   int[] rankDifference = new int[2];
 	   if (node.getKey() != -1) { // Means node is not EXT
 		   rankDifference[0] = node.getHeight() - node.getLeft().getHeight();
@@ -216,10 +206,12 @@ public class AVLTree {
 				   if (parentRD[0] == 0 && parentRD[1] == 2) { // node is (1,1) left child to a (0,2) parent
 					   rotateRight(parent);
 					   promote(node);
+					   numOfOperations += 2;
 				   }
 				   else if (parentRD[0] == 2 && parentRD[1] == 0) { // node is (1,1) right child to a (2,0) parent
 					   rotateLeft(parent);
 					   promote(node);
+					   numOfOperations +=2;
 				   }
 			   }
 		   }
@@ -330,7 +322,7 @@ public class AVLTree {
 			   }
 			   numOfOps += rebalanceDelete(parent);
 			   if (parent.getLeft().isRealNode()) { // To start rebalance from child, not from parent - might cover some edge cases
-				   numOfOps += rebalanceDelete(parent.getLeft()) - 1; // TODO CHECK CORRECTNESS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+				   numOfOps += rebalanceDelete(parent.getLeft()) - 1; 
 			   }
 			   else if (parent.getRight().isRealNode()) { // In case parent doesn't have a left child.
 				   numOfOps += rebalanceDelete(parent.getRight()) - 1;
@@ -755,7 +747,7 @@ public class AVLTree {
 		   }
 		   joinPoint.setParent(x);
 	   }
-	   else { // joinPoints rank is greater than smallRank!!
+	   else { // joinPoints rank is greater than smallRank!! Happens when joinPoint's chi.d is EXT!
 		   x.setParent(joinPoint);
 		   joinPoint.setLeft(x);
 		   x.setRight(EXT);
@@ -910,7 +902,7 @@ public class AVLTree {
 		}
 
 
-	    public void setHeight(int height) { // Sets the height (i.e rank) of the given node. O(1)
+	    public void setHeight(int height) { // Sets the height (i.e. rank) of the given node. O(1)
 		  rank = height;
 	    }
 
