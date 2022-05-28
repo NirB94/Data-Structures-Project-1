@@ -3,4 +3,5 @@ The first out of two practical projects for the Winter 2021 Data Structures cour
 The goal of the project is implementing an AVL tree with the Java language.\
 Students working on the project:\
 Arielle Arabov\
-Nir Borger
+Nir Borger\
+Grade: 87/100.
